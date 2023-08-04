@@ -156,10 +156,6 @@ class Server {
     std::scoped_lock lock {mutex_clients};
     streamable_buffer sbuffer;
     for (auto& [key, client] : clients) {
-      // std::visit(
-      //   [&sbuffer] (auto&&x) { sbuffer << x; },
-      //   msg
-      // );
       sbuffer << msg;
       try {
         send(sbuffer, *client.sock);
@@ -238,11 +234,6 @@ class Server {
   }
 
   void send_past_turns(tcp::endpoint client_endpoint) {
-    // lock so that broadcast doesn't send anything
-    //std::scoped_lock lock {mutex_clients, mutex_turns};
-    println("Ktos sie spoznil - wyslij stare kolejki");
-    return;
-    
     auto it = clients.find(client_endpoint);
     assert(it != clients.end());
     ClientInfo& client = it->second;
@@ -412,7 +403,6 @@ public:
       // whole map and here we modify something that only this thread accesses
       // also, do it before client_connected, because afterwise writes may
       // occur to this socket in another thread
-      // println("send hello. game length:", hello.game_length);
       streamable_buffer sbuffer;
       sbuffer << hello;
       try {
@@ -441,7 +431,6 @@ public:
       try {
         sbuffer >> msg;
       } catch (const boost::system::system_error& e) {
-        // if (e.code() == boost::asio::error::eof) {
         std::cerr << "Error: unable to read from client" << std::endl;
         client_disconnected(client_endpoint);
         return;
@@ -450,7 +439,6 @@ public:
         client_disconnected(client_endpoint);
         return;
       }
-      // println("Read input from:", client_endpoint);
 
       if (std::holds_alternative<ClientMessageMove>(msg)) {
         if (std::get<ClientMessageMove>(msg).direction > 3) {
